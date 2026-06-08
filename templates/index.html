@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Генератор лендингов вебинаров</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 720px; margin: 60px auto; padding: 0 20px; color: #222; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    p.lead { color: #666; margin-bottom: 32px; line-height: 1.5; }
+    textarea { width: 100%; min-height: 320px; padding: 16px; font-size: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; resize: vertical; }
+    .accent-row { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+    .accent-row label { font-size: 14px; font-weight: 600; }
+    .accent-row input[type="color"] { width: 44px; height: 36px; border: 1px solid #ddd; border-radius: 6px; padding: 2px; cursor: pointer; }
+    .accent-row input[type="text"] { width: 110px; padding: 8px 12px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; }
+    .accent2-toggle { display: flex; align-items: center; gap: 8px; margin-top: 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .accent2-toggle input { cursor: pointer; }
+    .accent2-row { display: none; }
+    .accent2-row.show { display: flex; }
+    .hint.accent2-row.show { display: block; }
+    .wishes-label { display: block; font-size: 14px; font-weight: 600; margin-top: 22px; margin-bottom: 8px; }
+    .wishes-textarea { min-height: 90px; }
+    .photo-label { display: block; font-size: 14px; font-weight: 600; margin-top: 22px; margin-bottom: 8px; }
+    .photo-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .photo-field { flex: 1 1 220px; }
+    .photo-field span { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+    .photo-field input[type="file"] { width: 100%; font-size: 13px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+    .form-divider { border: none; border-top: 1px solid #e5e5e5; margin: 28px 0; }
+    button { margin-top: 16px; padding: 14px 28px; font-size: 16px; background: #AADF32; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #8CC220; }
+    button:disabled { opacity: 0.6; cursor: progress; }
+    .error { background: #fdecea; border: 1px solid #f5c2c0; color: #b42318; padding: 16px; border-radius: 8px; margin-bottom: 24px; white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
+    .hint { color: #999; font-size: 13px; margin-top: 8px; line-height: 1.4; }
+    .status { margin-top: 16px; color: #666; font-size: 14px; display: none; }
+  </style>
+</head>
+<body>
+  <h1>Генератор лендингов вебинаров</h1>
+  <p class="lead">Вставь текст ТЗ — на выходе получишь готовый HTML-лендинг в стиле шаблона Zerocoder. Генерация занимает несколько минут, не закрывай вкладку.</p>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/generate" id="genForm" enctype="multipart/form-data">
+    <textarea name="tz" placeholder="Вставь сюда текст ТЗ вебинара...">{{ tz or '' }}</textarea>
+    <div class="hint">Чем подробнее ТЗ — тем точнее лендинг.</div>
+
+    <hr class="form-divider">
+
+    <div class="accent-row">
+      <label for="accentPicker">Акцентный цвет:</label>
+      <input type="color" id="accentPicker" value="{{ accent or '#AADF32' }}">
+      <input type="text" id="accentHex" name="accent" value="{{ accent or '#AADF32' }}" pattern="#?[0-9A-Fa-f]{6}" maxlength="7">
+    </div>
+    <div class="hint">Из этого цвета автоматически рассчитаются более тёмный и более светлый оттенки — они зададут всю палитру лендинга.</div>
+
+    <label class="accent2-toggle">
+      <input type="checkbox" id="useAccent2">
+      Добавить второй акцентный цвет
+    </label>
+
+    <div class="accent-row accent2-row" id="accent2Row">
+      <label for="accent2Picker">Второй акцент:</label>
+      <input type="color" id="accent2Picker" value="#DF3D3D">
+      <input type="text" id="accent2Hex" name="accent2" value="" pattern="#?[0-9A-Fa-f]{6}" maxlength="7" placeholder="#DF3D3D">
+    </div>
+    <div class="hint accent2-row" id="accent2Hint">Пойдёт на контрастные элементы — альтернативные карточки, бейджи, финальный блок. Без него вся палитра строится на одном цвете.</div>
+
+    <hr class="form-divider">
+
+    <label class="photo-label">Фото спикеров (необязательно)</label>
+    <div class="photo-row">
+      <div class="photo-field">
+        <span>Спикер 1 (по порядку из ТЗ)</span>
+        <input type="file" name="speaker_photo_1" accept="image/*">
+      </div>
+      <div class="photo-field">
+        <span>Спикер 2 (если их двое)</span>
+        <input type="file" name="speaker_photo_2" accept="image/*">
+      </div>
+    </div>
+    <div class="hint">Фото подставятся вместо плейсхолдеров — порядок загрузки должен совпадать с порядком спикеров в ТЗ. Если не загрузить — лендинг соберётся с плейсхолдером, как раньше.</div>
+
+    <hr class="form-divider">
+
+    <label for="wishes" class="wishes-label">Ваши пожелания по дизайну (необязательно)</label>
+    <textarea name="wishes" id="wishes" class="wishes-textarea" placeholder="Например: «пиксельный шрифт на главном экране» или «более округлые кнопки»">{{ wishes or '' }}</textarea>
+    <div class="hint">Опиши, что хочется поменять в стиле — модель попробует подобрать подходящий CSS и шрифт. Если воплотить через стили не получится, лендинг всё равно соберётся — просто без этих правок.</div>
+
+    <hr class="form-divider">
+
+    <button type="submit" id="genButton">Сгенерировать лендинг</button>
+    <div class="status" id="genStatus">Генерирую... обычно это занимает 1-2 минуты ⏳</div>
+  </form>
+
+  <script>
+    var picker = document.getElementById('accentPicker');
+    var hexInput = document.getElementById('accentHex');
+    picker.addEventListener('input', function () { hexInput.value = picker.value.toUpperCase(); });
+    hexInput.addEventListener('input', function () {
+      var v = hexInput.value.trim();
+      if (/^#?[0-9A-Fa-f]{6}$/.test(v)) {
+        picker.value = v.startsWith('#') ? v : '#' + v;
+      }
+    });
+
+    var useAccent2 = document.getElementById('useAccent2');
+    var accent2Rows = document.querySelectorAll('.accent2-row');
+    var accent2Picker = document.getElementById('accent2Picker');
+    var accent2Hex = document.getElementById('accent2Hex');
+
+    function syncAccent2Visibility() {
+      accent2Rows.forEach(function (el) { el.classList.toggle('show', useAccent2.checked); });
+      if (useAccent2.checked) {
+        accent2Hex.value = accent2Picker.value.toUpperCase();
+      } else {
+        accent2Hex.value = '';
+      }
+    }
+    useAccent2.addEventListener('change', syncAccent2Visibility);
+
+    accent2Picker.addEventListener('input', function () { accent2Hex.value = accent2Picker.value.toUpperCase(); });
+    accent2Hex.addEventListener('input', function () {
+      var v = accent2Hex.value.trim();
+      if (/^#?[0-9A-Fa-f]{6}$/.test(v)) {
+        accent2Picker.value = v.startsWith('#') ? v : '#' + v;
+      }
+    });
+
+    document.getElementById('genForm').addEventListener('submit', function () {
+      document.getElementById('genButton').disabled = true;
+      document.getElementById('genButton').textContent = 'Генерирую...';
+      document.getElementById('genStatus').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

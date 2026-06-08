@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Лендинг готов</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1100px; margin: 40px auto; padding: 0 20px; color: #222; }
+    h1 { font-size: 24px; }
+    .actions { margin: 16px 0 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .actions a { padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block; }
+    .btn-primary { background: #AADF32; color: #111; }
+    .btn-secondary { background: #f0f0f0; color: #333; }
+    .checklist { background: #f7f9f4; border: 1px solid #e2e8d8; border-radius: 10px; padding: 18px 22px; margin-bottom: 24px; }
+    .checklist h2 { font-size: 16px; margin: 0 0 12px; }
+    .checklist ol { margin: 0; padding-left: 20px; }
+    .checklist li { margin-bottom: 14px; line-height: 1.5; font-size: 14px; }
+    .checklist li:last-child { margin-bottom: 0; }
+    .prompt-box { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px; margin-top: 8px; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.5; color: #444; white-space: pre-wrap; }
+    iframe { width: 100%; height: 80vh; border: 1px solid #ddd; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Готово! Лендинг сгенерирован 🎉</h1>
+
+  {% if checklist %}
+  <div class="checklist">
+    <h2>Что осталось доделать руками:</h2>
+    <ol>
+      {% for item in checklist %}
+      <li>
+        {{ item.text }}
+        {% for prompt in item.prompts %}
+        <div class="prompt-box">{{ prompt }}</div>
+        {% endfor %}
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  <div class="actions">
+    <a class="btn-primary" href="{{ url_for('preview', subpath=relative_path) }}" download="index.html">Скачать HTML</a>
+    <a class="btn-secondary" href="/">Сгенерировать ещё один</a>
+  </div>
+  <iframe src="{{ url_for('preview', subpath=relative_path) }}"></iframe>
+</body>
+</html>
